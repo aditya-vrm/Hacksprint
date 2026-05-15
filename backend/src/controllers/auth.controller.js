@@ -66,8 +66,8 @@ async function registerUser(req, res) {
         // SET COOKIE
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            secure: true,
+            sameSite: "none",
             maxAge: 24 * 60 * 60 * 1000,
         });
 
@@ -141,8 +141,8 @@ async function loginUser(req, res) {
         // set cookie
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            secure: true,
+            sameSite: "none",
             maxAge: 24 * 60 * 60 * 1000,
         });
 
@@ -199,8 +199,8 @@ async function logoutUser(req, res) {
         // clear cookie
         res.cookie("token", "", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            secure: true,
+            sameSite: "none",
             expires: new Date(0),
         });
 
