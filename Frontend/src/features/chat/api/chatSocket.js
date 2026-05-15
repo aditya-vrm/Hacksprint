@@ -1,9 +1,12 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL ||
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/?$/, '') ||
-  'http://localhost:3000';
+let SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+
+if (import.meta.env.PROD) {
+  SOCKET_URL = 'https://hacksprint-n0uc.onrender.com';
+} else {
+  SOCKET_URL = SOCKET_URL || import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3000';
+}
 
 let socket = null;
 
