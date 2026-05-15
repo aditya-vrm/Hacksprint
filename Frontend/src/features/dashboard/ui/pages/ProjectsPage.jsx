@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, GitBranch, ExternalLink, X } from 'lucide-react';
 import { useCommunity } from '../../../community/hooks/useCommunity';
 import ProjectDetailModal from '../../../community/ui/components/ProjectDetailModal';
+import axiosInstance from '../../../../app/config/axiosInstance';
 
 const ProjectsPage = () => {
   const { projects, addProject } = useCommunity();
@@ -17,15 +18,28 @@ const ProjectsPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleUpload = (e) => {
+  const handleUpload = async (e) => {
     e.preventDefault();
     if (!formData.projectName) return;
     
-    addProject({
-      ...formData,
-      status: 'Active',
-      updatedAt: new Date().toLocaleDateString(),
-    });
+    try {
+      const res = await axiosInstance.post('/projects/create', {
+        projectName: formData.projectName,
+        githubRepo: formData.githubRepo,
+        deploymentLink: formData.deploymentLink,
+      });
+      
+      // Update local state for immediate feedback
+      addProject({
+        id: res.data.project._id,
+        ...formData,
+        status: 'Active',
+        updatedAt: new Date().toLocaleDateString(),
+      });
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      alert('Failed to save project to database.');
+    }
 
     setIsModalOpen(false);
     setFormData({ projectName: '', githubRepo: '', deploymentLink: '' });

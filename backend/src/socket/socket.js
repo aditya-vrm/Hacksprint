@@ -54,8 +54,7 @@ socket.on("send_message", async (data) => {
       io.to(sender).emit("receive_message", message);
 
    } catch (error) {
-
-      console.log("Socket Error:", error);
+console.log("Socket Error:", error);
 
    }
 

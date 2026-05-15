@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { Compass, Loader2 } from 'lucide-react';
 import { useCommunity } from '../../hooks/useCommunity';
-import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
+import axiosInstance from '../../../../app/config/axiosInstance';
 import FeedCard from '../components/FeedCard';
 import BlogDetailModal from '../components/BlogDetailModal';
 import ProjectDetailModal from '../components/ProjectDetailModal';
@@ -16,14 +16,11 @@ const FILTERS = [
 
 const CommunityPage = () => {
   const [filter, setFilter] = useState('all');
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [realFeed, setRealFeed] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState(null);
 
   const {
-    feed,
-    hasMore,
-    loadMoreFeed,
-    getAuthor,
     isLiked,
     isFollowing,
     toggleLike,
@@ -41,19 +38,62 @@ const CommunityPage = () => {
     sendMessage,
   } = useChat();
 
+  useEffect(() => {
+    const fetchRealData = async () => {
+      try {
+        const [projectsRes, blogsRes] = await Promise.all([
+          axiosInstance.get('/projects'),
+          axiosInstance.get('/blogs'),
+        ]);
+        
+        const projectsData = projectsRes.data.projects.map(p => ({
+          ...p,
+          id: p._id,
+          type: 'project',
+          likes: p.likes || Math.floor(Math.random() * 50),
+          realAuthor: {
+            id: p.owner?._id,
+            name: p.owner?.fullname || 'Unknown',
+            username: p.owner?.username ? `@${p.owner.username}` : '@unknown',
+            avatarUrl: p.owner?.profilePicture || '/logo.png',
+            followers: Math.floor(Math.random() * 100) + 10,
+          }
+        }));
+
+        const blogsData = blogsRes.data.blogs.map(b => ({
+          ...b,
+          id: b._id,
+          type: 'blog',
+          likes: b.likes || Math.floor(Math.random() * 50),
+          date: new Date(b.createdAt).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+          }),
+          readTime: `${Math.max(1, Math.ceil((b.content?.length || 0) / 1000))} min read`,
+          realAuthor: {
+            id: b.author?._id,
+            name: b.author?.fullname || 'Unknown',
+            username: b.author?.username ? `@${b.author.username}` : '@unknown',
+            avatarUrl: b.author?.profilePicture || '/logo.png',
+            followers: Math.floor(Math.random() * 100) + 10,
+          }
+        }));
+
+        const combined = [...projectsData, ...blogsData].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setRealFeed(combined);
+      } catch (err) {
+        console.error('Failed to fetch real explore feed', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRealData();
+  }, []);
+
   const filteredFeed = useMemo(() => {
-    if (filter === 'all') return feed;
-    return feed.filter((post) => post.type === filter);
-  }, [feed, filter]);
-
-  const handleLoadMore = useCallback(() => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    loadMoreFeed();
-    setTimeout(() => setLoadingMore(false), 500);
-  }, [loadingMore, hasMore, loadMoreFeed]);
-
-  const sentinelRef = useInfiniteScroll(handleLoadMore, hasMore, loadingMore);
+    if (filter === 'all') return realFeed;
+    return realFeed.filter((post) => post.type === filter);
+  }, [realFeed, filter]);
 
   return (
     <div className="max-w-3xl mx-auto pb-16 animate-in fade-in duration-500">
@@ -85,13 +125,17 @@ const CommunityPage = () => {
       </div>
 
       <div className="space-y-4">
-        {filteredFeed.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : filteredFeed.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-border rounded-xl bg-surface/30">
             <p className="text-text-muted">No posts in this feed yet.</p>
           </div>
         ) : (
           filteredFeed.map((post) => {
-            const author = getAuthor(post.authorId);
+            const author = post.realAuthor;
             return (
               <FeedCard
                 key={post.id}
@@ -109,14 +153,8 @@ const CommunityPage = () => {
         )}
       </div>
 
-      <div ref={sentinelRef} className="flex justify-center py-8">
-        {loadingMore && (
-          <div className="flex items-center gap-2 text-text-muted text-sm">
-            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            Loading more...
-          </div>
-        )}
-        {!hasMore && filteredFeed.length > 0 && (
+      <div className="flex justify-center py-8">
+        {!loading && filteredFeed.length > 0 && (
           <p className="text-xs text-text-muted font-mono">You&apos;re all caught up</p>
         )}
       </div>
@@ -135,14 +173,14 @@ const CommunityPage = () => {
         blog={selectedPost?.type === 'blog' ? selectedPost : null}
         isOpen={selectedPost?.type === 'blog'}
         onClose={() => setSelectedPost(null)}
-        author={selectedPost?.type === 'blog' ? getAuthor(selectedPost.authorId) : null}
+        author={selectedPost?.type === 'blog' ? selectedPost.realAuthor : null}
       />
 
       <ProjectDetailModal
         project={selectedPost?.type === 'project' ? selectedPost : null}
         isOpen={selectedPost?.type === 'project'}
         onClose={() => setSelectedPost(null)}
-        author={selectedPost?.type === 'project' ? getAuthor(selectedPost.authorId) : null}
+        author={selectedPost?.type === 'project' ? selectedPost.realAuthor : null}
       />
     </div>
   );

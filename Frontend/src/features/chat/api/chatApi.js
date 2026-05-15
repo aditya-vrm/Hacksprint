@@ -1,8 +1,8 @@
 import axiosInstance from '../../../app/config/axiosInstance';
 
-export const fetchChatHistory = async (roomId) => {
+export const fetchChatHistory = async (receiverId) => {
   try {
-    const { data } = await axiosInstance.get(`/v1/chat/messages/${roomId}`);
+    const { data } = await axiosInstance.get(`/v1/chat/${receiverId}`);
     return data?.data?.messages ?? data?.messages ?? [];
   } catch {
     return null;

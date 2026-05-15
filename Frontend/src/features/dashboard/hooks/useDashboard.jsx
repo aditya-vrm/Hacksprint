@@ -2,9 +2,6 @@ import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { CURRENT_USER_ID } from '../../community/state/communitySlice';
 
-const DASHBOARD_STATS = {
-  profileViews: '12.4k',
-};
 
 const getGreetingMessage = () => {
   const hour = new Date().getHours();
@@ -29,11 +26,11 @@ export const useDashboard = () => {
 
   const stats = useMemo(
     () => ({
-      ...DASHBOARD_STATS,
+      profileViews: (totalLikes * 42 + feed.length * 15).toLocaleString(),
       totalLikes,
       followers: profile.followers,
     }),
-    [profile.followers, totalLikes],
+    [profile.followers, totalLikes, feed.length],
   );
   const greetingMessage = useMemo(() => getGreetingMessage(), []);
 

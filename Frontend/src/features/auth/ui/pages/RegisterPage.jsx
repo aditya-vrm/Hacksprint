@@ -8,6 +8,7 @@ import { registerUser } from '../../../community/state/communitySlice';
 import { DASHBOARD_PATH } from '../../../landing/hooks/useLandingNavigation';
 import { formatUsername, isValidUsername } from '../../../../shared/utils/username';
 import { GENDER_OPTIONS } from '../../../../shared/constants/profileFields';
+import axiosInstance from '../../../../app/config/axiosInstance';
 
 const RegisterPage = () => {
   const dispatch = useDispatch();
@@ -38,7 +39,7 @@ const RegisterPage = () => {
   const usernameError =
     form.username !== '' && !isValidUsername(form.username);
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     if (
       passwordError ||
@@ -52,26 +53,45 @@ const RegisterPage = () => {
     }
 
     const username = formatUsername(form.username);
+    const avatarUrl = form.gender === 'male' 
+      ? '/male-avatar.avif' 
+      : (form.gender === 'female' ? '/female-avatar.png' : profile.avatarUrl);
 
-    updateProfile({
-      name: form.name,
-      username,
-      email: form.email,
-      dateOfBirth: form.dateOfBirth,
-      gender: form.gender,
-    });
-    dispatch(
-      registerUser({
+    try {
+      const response = await axiosInstance.post('/v1/auth/register', {
+        fullname: form.name,
+        username,
+        email: form.email,
+        dob: form.dateOfBirth,
+        gender: form.gender,
+        password: password,
+        confirmPassword: confirmPassword,
+      });
+
+      updateProfile({
         name: form.name,
         username,
         email: form.email,
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
-        avatarUrl: profile.avatarUrl,
-      }),
-    );
-    login();
-    navigate(redirectTo, { replace: true });
+      });
+
+      dispatch(
+        registerUser({
+          name: form.name,
+          username,
+          email: form.email,
+          dateOfBirth: form.dateOfBirth,
+          gender: form.gender,
+          avatarUrl,
+        }),
+      );
+      login();
+      navigate(redirectTo, { replace: true });
+    } catch (error) {
+      console.error('Registration failed:', error);
+      alert(error.response?.data?.message || 'Registration failed. Please try again.');
+    }
   };
 
   return (

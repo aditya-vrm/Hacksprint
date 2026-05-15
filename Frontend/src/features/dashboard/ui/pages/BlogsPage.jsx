@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, X, Calendar, Clock, BookOpen } from 'lucide-react';
 import { useCommunity } from '../../../community/hooks/useCommunity';
 import BlogDetailModal from '../../../community/ui/components/BlogDetailModal';
+import axiosInstance from '../../../../app/config/axiosInstance';
 
 const BlogsPage = () => {
   const { blogs, addBlog } = useCommunity();
@@ -17,19 +18,31 @@ const BlogsPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handlePublish = (e) => {
+  const handlePublish = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.content) return;
     
-    addBlog({
-      ...formData,
-      readTime: `${Math.max(1, Math.ceil(formData.content.length / 1000))} min read`,
-      date: new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-    });
+    try {
+      const res = await axiosInstance.post('/blogs/create', {
+        title: formData.title,
+        summary: formData.summary,
+        content: formData.content,
+      });
+
+      addBlog({
+        id: res.data.blog._id,
+        ...formData,
+        readTime: `${Math.max(1, Math.ceil(formData.content.length / 1000))} min read`,
+        date: new Date().toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to create blog:', error);
+      alert('Failed to save blog to database.');
+    }
 
     setIsModalOpen(false);
     setFormData({ title: '', summary: '', content: '' });

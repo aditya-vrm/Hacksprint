@@ -4,6 +4,7 @@ const router = express.Router();
 
 const {
    createProject,
+   getProjects,
 } = require("../controllers/project.controller");
 
 const {
@@ -15,5 +16,7 @@ router.post(
    authMiddleware,
    createProject
 );
+
+router.get("/", getProjects);
 
 module.exports = router;
