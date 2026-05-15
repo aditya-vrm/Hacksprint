@@ -13,8 +13,15 @@ const respondWithValidationErrors = (req, res, next) => {
     next();
 };
 
-// REGISTER USER VALIDATIONS
+// REGISTER VALIDATIONS
 const registerUserValidations = [
+
+    body("fullname")
+        .isString()
+        .withMessage("Fullname must be a string")
+        .isLength({ min: 3 })
+        .withMessage("Fullname must be at least 3 characters long"),
+
     body("username")
         .isString()
         .withMessage("Username must be a string")
@@ -25,44 +32,37 @@ const registerUserValidations = [
         .isEmail()
         .withMessage("Invalid email address"),
 
+    body("dob")
+        .notEmpty()
+        .withMessage("Date of birth is required"),
+
+    body("gender")
+        .isIn(["male", "female", "other"])
+        .withMessage("Invalid gender"),
+
     body("password")
         .isLength({ min: 6 })
         .withMessage("Password must be at least 6 characters long"),
 
-    body("bio")
-        .optional()
-        .isString()
-        .withMessage("Bio must be a string"),
+    body("confirmPassword")
+        .custom((value, { req }) => {
 
-    body("profilePicture")
-        .optional()
-        .isString()
-        .withMessage("Profile picture must be a string"),
+            if (value !== req.body.password) {
+                throw new Error("Passwords do not match");
+            }
 
-    body("skills")
-        .optional()
-        .isArray()
-        .withMessage("Skills must be an array"),
-
-    body("socialLinks")
-        .optional()
-        .isObject()
-        .withMessage("Social links must be an object"),
+            return true;
+        }),
 
     respondWithValidationErrors,
 ];
 
 // LOGIN VALIDATIONS
 const loginValidations = [
+
     body("email")
-        .optional()
         .isEmail()
         .withMessage("Invalid email address"),
-
-    body("username")
-        .optional()
-        .isString()
-        .withMessage("Username must be a string"),
 
     body("password")
         .isLength({ min: 6 })

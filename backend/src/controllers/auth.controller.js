@@ -6,17 +6,17 @@ const jwt = require("jsonwebtoken");
 
 async function registerUser(req, res) {
     try {
+
         const {
+            fullname,
             username,
             email,
+            dob,
+            gender,
             password,
-            skills,
-            socialLinks,
-            bio,
-            profilePicture,
         } = req.body;
 
-        // check existing user
+        // CHECK EXISTING USER
         const isUserAlreadyExists = await userModel.findOne({
             $or: [{ email }, { username }],
         });
@@ -27,21 +27,20 @@ async function registerUser(req, res) {
             });
         }
 
-        // hash password
+        // HASH PASSWORD
         const hash = await bcrypt.hash(password, 10);
 
-        // create user
+        // CREATE USER
         const user = await userModel.create({
+            fullname,
             username,
             email,
+            dob,
+            gender,
             password: hash,
-            bio,
-            profilePicture,
-            skills,
-            socialLinks,
         });
 
-        // generate token
+        // GENERATE TOKEN
         const token = jwt.sign(
             {
                 id: user._id,
@@ -55,7 +54,7 @@ async function registerUser(req, res) {
             }
         );
 
-        // set cookie
+        // SET COOKIE
         res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -63,26 +62,28 @@ async function registerUser(req, res) {
             maxAge: 24 * 60 * 60 * 1000,
         });
 
-        // response
+        // RESPONSE
         return res.status(201).json({
             message: "User registered successfully",
             user: {
                 id: user._id,
+                fullname: user.fullname,
                 username: user.username,
                 email: user.email,
-                bio: user.bio,
-                profilePicture: user.profilePicture,
-                skills: user.skills,
-                socialLinks: user.socialLinks,
+                dob: user.dob,
+                gender: user.gender,
                 role: user.role,
             },
         });
+
     } catch (err) {
+
         console.log("Error in register user:", err);
 
         return res.status(500).json({
             message: "Internal server error",
         });
+
     }
 }
 
