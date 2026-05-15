@@ -1,4 +1,5 @@
-import { Smartphone, Apple } from 'lucide-react';
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { DASHBOARD_PATH } from '../../../landing/hooks/useLandingNavigation';
@@ -8,6 +9,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = location.state?.from?.pathname || DASHBOARD_PATH;
+  
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -24,26 +27,32 @@ const LoginPage = () => {
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-xs font-mono text-text-muted uppercase tracking-wider mb-2">Email</label>
-          <input 
-            type="email" 
-            placeholder="developer@example.com"
+          <label className="block text-xs font-mono text-text-muted uppercase tracking-wider mb-2">Email or Username</label>
+          <input
+            type="text"
+            placeholder="you@example.com or @username"
             className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
             required
           />
         </div>
 
         <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-xs font-mono text-text-muted uppercase tracking-wider">Password</label>
-            <a href="#" className="text-xs text-primary hover:text-primary-hover transition-colors">Forgot?</a>
+          <label className="block text-xs font-mono text-text-muted uppercase tracking-wider mb-2">Password</label>
+          <div className="relative">
+            <input 
+              type={showPassword ? "text" : "password"} 
+              placeholder="••••••••"
+              className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors focus:outline-none"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
           </div>
-          <input 
-            type="password" 
-            placeholder="••••••••"
-            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-            required
-          />
         </div>
 
         <button 
@@ -71,16 +80,6 @@ const LoginPage = () => {
             <path fill="#FBBC05" d="M5.277 14.268A7.12 7.12 0 014.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 000 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067z"/>
           </svg>
           Continue with Google
-        </button>
-
-        <button className="flex items-center justify-center w-full bg-background border border-border hover:border-primary/50 text-text-main hover:text-white py-2.5 rounded-lg text-sm font-medium transition-all group relative">
-          <Smartphone className="w-4 h-4 absolute left-4 text-text-muted group-hover:text-primary transition-colors" />
-          Continue with Phone Number
-        </button>
-
-        <button className="flex items-center justify-center w-full bg-background border border-border hover:border-primary/50 text-text-main hover:text-white py-2.5 rounded-lg text-sm font-medium transition-all group relative">
-          <Apple className="w-4 h-4 absolute left-4 text-text-muted group-hover:text-primary transition-colors" />
-          Continue with Apple
         </button>
       </div>
 

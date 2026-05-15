@@ -4,20 +4,13 @@ import AuthLayout from '../layouts/AuthLayout';
 import ProtectedRoutes from './ProtectedRoutes';
 import PublicRoutes from './PublicRoutes';
 import HomePage from '../../features/dashboard/ui/pages/HomePage';
-import SupportPage from '../../features/dashboard/ui/pages/SupportPage';
-import DeploymentsPage from '../../features/dashboard/ui/pages/DeploymentsPage';
+import ProjectsPage from '../../features/dashboard/ui/pages/ProjectsPage';
+import BlogsPage from '../../features/dashboard/ui/pages/BlogsPage';
+import ProfilePage from '../../features/profile/ui/pages/ProfilePage';
+import CommunityPage from '../../features/community/ui/pages/CommunityPage';
 import LoginPage from '../../features/auth/ui/pages/LoginPage';
 import RegisterPage from '../../features/auth/ui/pages/RegisterPage';
 import LandingPage from '../../features/landing/ui/pages/LandingPage';
-
-const Placeholder = ({ title }) => (
-  <div className="flex items-center justify-center h-[60vh] text-center">
-    <div>
-      <h2 className="text-3xl font-bold text-white mb-2">{title}</h2>
-      <p className="text-text-muted">This page is under construction.</p>
-    </div>
-  </div>
-);
 
 const AppRoutes = () => (
   <Routes>
@@ -33,12 +26,10 @@ const AppRoutes = () => (
     <Route path="/dashboard" element={<ProtectedRoutes />}>
       <Route element={<DashboardLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="support" element={<SupportPage />} />
-        <Route path="deployments" element={<DeploymentsPage />} />
-        <Route path="repositories" element={<Placeholder title="Repositories" />} />
-        <Route path="community" element={<Placeholder title="Community" />} />
-        <Route path="projects" element={<Placeholder title="Projects" />} />
-        <Route path="blogs" element={<Placeholder title="Blogs" />} />
+        <Route path="community" element={<CommunityPage />} />
+        <Route path="projects" element={<ProjectsPage />} />
+        <Route path="blogs" element={<BlogsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
     </Route>
 

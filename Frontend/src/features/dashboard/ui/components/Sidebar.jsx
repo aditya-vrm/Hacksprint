@@ -1,34 +1,27 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useProfile } from '../../../profile/hooks/useProfile';
 import {
   LayoutDashboard,
-  Database,
-  Rocket,
-  HelpCircle,
+  Compass,
+  Folder,
+  FileText,
   Plus,
-  BookOpen,
-  CheckCircle2,
   Settings,
   ChevronLeft,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
 import { getItem, setItem } from '../../../../shared/utils/LocalStorage';
-
-const PROFILE_IMAGE =
-  'https://i.pinimg.com/originals/ae/31/c8/ae31c8133ba753a0fd618a50bf78f56d.jpg';
+import { useAuth } from '../../../auth/hooks/useAuth';
 
 const SIDEBAR_STORAGE_KEY = 'sidebar_expanded';
 
 export const SIDEBAR_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard', end: true },
-  { icon: Database, label: 'Repositories', path: '/dashboard/repositories' },
-  { icon: Rocket, label: 'Deployments', path: '/dashboard/deployments' },
-  { icon: HelpCircle, label: 'Support', path: '/dashboard/support' },
-];
-
-const FOOTER_LINKS = [
-  { icon: BookOpen, label: 'Documentation', href: '#' },
-  { icon: CheckCircle2, label: 'System Status', href: '#' },
+  { icon: Compass, label: 'Explore', path: '/dashboard/community' },
+  { icon: Folder, label: 'Projects', path: '/dashboard/projects' },
+  { icon: FileText, label: 'Blogs', path: '/dashboard/blogs' },
 ];
 
 const Sidebar = () => {
@@ -36,6 +29,10 @@ const Sidebar = () => {
     const stored = getItem(SIDEBAR_STORAGE_KEY);
     return stored === null ? true : stored === 'true';
   });
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const { logout } = useAuth();
+  const { profile } = useProfile();
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setExpanded((prev) => {
@@ -56,7 +53,7 @@ const Sidebar = () => {
         {/* Header: toggle + logo */}
         <div className={`border-b border-border/50 shrink-0 ${expanded ? 'p-4' : 'p-3'}`}>
           <div
-            className={`flex items-center gap-2 mb-3 ${expanded ? 'justify-between' : 'justify-center'}`}
+            className={`flex mb-3 ${expanded ? 'justify-start' : 'justify-center'}`}
           >
             <button
               type="button"
@@ -76,16 +73,13 @@ const Sidebar = () => {
                 )}
               </span>
             </button>
-
-            {expanded && (
-              <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider animate-in fade-in duration-200">
-                Menu
-              </span>
-            )}
           </div>
 
-          <div
-            className={`flex items-center transition-all duration-300 ${
+          <NavLink
+            to="/dashboard"
+            end
+            aria-label="Go to dashboard"
+            className={`flex items-center transition-all duration-300 hover:opacity-90 ${
               expanded ? 'space-x-3' : 'justify-center'
             }`}
           >
@@ -102,13 +96,10 @@ const Sidebar = () => {
               }`}
             >
               <h1 className="text-lg font-bold tracking-tight text-white whitespace-nowrap">
-                DevHub IDE
+                DevHub
               </h1>
-              <p className="text-xs text-text-muted mt-0.5 font-mono whitespace-nowrap">
-                v1.2.0-stable
-              </p>
             </div>
-          </div>
+          </NavLink>
         </div>
 
         {/* Main nav */}
@@ -157,6 +148,7 @@ const Sidebar = () => {
       <div className={`shrink-0 border-t border-border/50 ${expanded ? 'p-4' : 'p-2'}`}>
         <button
           type="button"
+          onClick={() => navigate('/dashboard/projects')}
           title={!expanded ? 'Create New Project' : undefined}
           className={`flex items-center bg-primary/10 text-primary hover:bg-primary hover:text-surface border border-primary/20 rounded-lg text-sm font-medium transition-all duration-300 shadow-[0_0_15px_rgba(34,211,238,0.1)] hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] mb-4 ${
             expanded
@@ -174,40 +166,14 @@ const Sidebar = () => {
           </span>
         </button>
 
-        <nav
-          className={`space-y-1 mb-4 ${expanded ? 'px-2' : 'px-0'}`}
-          aria-label="Sidebar footer links"
-        >
-          {FOOTER_LINKS.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              title={!expanded ? link.label : undefined}
-              className={`flex items-center text-xs text-text-muted hover:text-text-main transition-colors rounded-md hover:bg-surface-hover/50 ${
-                expanded ? 'px-2 py-1.5' : 'justify-center py-2'
-              }`}
-            >
-              <link.icon
-                className={`w-4 h-4 shrink-0 ${expanded ? 'mr-3' : ''}`}
-              />
-              <span
-                className={`whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${
-                  expanded ? 'opacity-100 max-w-[10rem]' : 'opacity-0 max-w-0'
-                }`}
-              >
-                {link.label}
-              </span>
-            </a>
-          ))}
-        </nav>
-
         <div
-          className={`space-y-1 ${expanded ? '' : 'flex flex-col items-center'}`}
+          className={`space-y-1 mt-2 ${expanded ? '' : 'flex flex-col items-center'}`}
           aria-label="Account"
         >
           <button
             type="button"
             title={!expanded ? 'Settings' : undefined}
+            onClick={() => setShowSettingsMenu(!showSettingsMenu)}
             className={`flex items-center rounded-lg text-sm text-text-muted hover:text-primary hover:bg-surface-hover transition-all duration-200 ${
               expanded ? 'w-full px-2 py-2' : 'w-10 h-10 justify-center'
             }`}
@@ -222,12 +188,43 @@ const Sidebar = () => {
             </span>
           </button>
 
-          <button
-            type="button"
+          {showSettingsMenu && (
+            <div className={`mt-1 overflow-hidden transition-all duration-300 ease-in-out ${expanded ? 'px-2' : 'flex flex-col items-center'}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  navigate('/');
+                }}
+                title={!expanded ? 'Logout' : undefined}
+                className={`flex items-center rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 ${
+                  expanded ? 'w-full px-2 py-2' : 'w-10 h-10 justify-center'
+                }`}
+              >
+                <LogOut className={`w-4 h-4 shrink-0 ${expanded ? 'mr-3' : ''}`} />
+                <span
+                  className={`whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${
+                    expanded ? 'opacity-100 max-w-[8rem]' : 'opacity-0 max-w-0'
+                  }`}
+                >
+                  Logout
+                </span>
+              </button>
+            </div>
+          )}
+
+          <NavLink
+            to="/dashboard/profile"
             title={!expanded ? 'Profile' : undefined}
-            className={`flex items-center rounded-lg hover:bg-surface-hover transition-all duration-200 group ${
-              expanded ? 'w-full px-2 py-2' : 'w-10 h-10 justify-center'
-            }`}
+            className={({ isActive }) =>
+              `flex items-center rounded-lg transition-all duration-200 group ${
+                expanded ? 'w-full px-2 py-2' : 'w-10 h-10 justify-center'
+              } ${
+                isActive
+                  ? 'bg-surface-hover text-primary'
+                  : 'hover:bg-surface-hover text-text-main'
+              }`
+            }
           >
             <div
               className={`rounded-full bg-surface-hover border border-border overflow-hidden shrink-0 transition-all duration-300 ${
@@ -235,19 +232,19 @@ const Sidebar = () => {
               }`}
             >
               <img
-                src={PROFILE_IMAGE}
+                src={profile.avatarUrl}
                 alt="User profile"
                 className="w-full h-full object-cover"
               />
             </div>
             <span
-              className={`text-sm font-medium text-text-main group-hover:text-white truncate transition-all duration-300 ease-in-out ${
+              className={`text-sm font-medium group-hover:text-white truncate transition-all duration-300 ease-in-out ${
                 expanded ? 'opacity-100 max-w-[8rem]' : 'opacity-0 max-w-0'
               }`}
             >
               Profile
             </span>
-          </button>
+          </NavLink>
         </div>
       </div>
     </aside>
