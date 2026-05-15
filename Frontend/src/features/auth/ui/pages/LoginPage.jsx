@@ -1,21 +1,52 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useProfile } from '../../../profile/hooks/useProfile';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { DASHBOARD_PATH } from '../../../landing/hooks/useLandingNavigation';
+import axiosInstance from '../../../../app/config/axiosInstance';
 
 const LoginPage = () => {
   const { login } = useAuth();
+  const { updateProfile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = location.state?.from?.pathname || DASHBOARD_PATH;
   
   const [showPassword, setShowPassword] = useState(false);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    login();
-    navigate(redirectTo, { replace: true });
+    setError('');
+
+    try {
+      // The backend uses $or: [{ email }, { username }], so we can safely send the same for both
+      const res = await axiosInstance.post('/v1/auth/login', {
+        username: identifier,
+        email: identifier,
+        password: password,
+      });
+
+      if (res.data && res.data.user) {
+        updateProfile({
+          name: res.data.user.fullname || res.data.user.username,
+          username: res.data.user.username,
+          email: res.data.user.email,
+          avatarUrl: res.data.user.profilePicture,
+          dateOfBirth: res.data.user.dob,
+          gender: res.data.user.gender,
+        });
+
+        login(); // update frontend redux state
+        navigate(redirectTo, { replace: true });
+      }
+    } catch (err) {
+      console.error('Login failed', err);
+      setError(err.response?.data?.message || 'Failed to login');
+    }
   };
 
   return (
@@ -25,12 +56,20 @@ const LoginPage = () => {
         <p className="text-sm text-text-muted">Log in to your DevHub Engine account.</p>
       </div>
 
+      {error && (
+        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="block text-xs font-mono text-text-muted uppercase tracking-wider mb-2">Email or Username</label>
           <input
             type="text"
-            placeholder="you@example.com or @username"
+            placeholder="you@example.com or username"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
             required
           />
@@ -42,6 +81,8 @@ const LoginPage = () => {
             <input 
               type={showPassword ? "text" : "password"} 
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all pr-10"
               required
             />

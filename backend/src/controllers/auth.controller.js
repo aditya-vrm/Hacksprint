@@ -30,6 +30,14 @@ async function registerUser(req, res) {
         // HASH PASSWORD
         const hash = await bcrypt.hash(password, 10);
 
+        // DETERMINE AVATAR
+        let profilePicture = "";
+        if (gender === "male") {
+            profilePicture = "/male-avatar.avif";
+        } else if (gender === "female") {
+            profilePicture = "/female-avatar.png";
+        }
+
         // CREATE USER
         const user = await userModel.create({
             fullname,
@@ -38,6 +46,7 @@ async function registerUser(req, res) {
             dob,
             gender,
             password: hash,
+            profilePicture,
         });
 
         // GENERATE TOKEN
@@ -72,6 +81,7 @@ async function registerUser(req, res) {
                 email: user.email,
                 dob: user.dob,
                 gender: user.gender,
+                profilePicture: user.profilePicture,
                 role: user.role,
             },
         });
@@ -140,8 +150,11 @@ async function loginUser(req, res) {
             message: "Login successful",
             user: {
                 id: user._id,
+                fullname: user.fullname,
                 username: user.username,
                 email: user.email,
+                dob: user.dob,
+                gender: user.gender,
                 bio: user.bio,
                 profilePicture: user.profilePicture,
                 skills: user.skills,

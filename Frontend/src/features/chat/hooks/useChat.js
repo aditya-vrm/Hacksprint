@@ -112,7 +112,7 @@ export const useChat = () => {
         });
       }
 
-      const history = await fetchChatHistory(roomId);
+      const history = await fetchChatHistory(user.id);
       if (history?.length) {
         dispatch(
           setRoomMessages({
