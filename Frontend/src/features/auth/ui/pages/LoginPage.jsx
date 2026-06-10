@@ -5,8 +5,11 @@ import { useProfile } from '../../../profile/hooks/useProfile';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { DASHBOARD_PATH } from '../../../landing/hooks/useLandingNavigation';
 import axiosInstance from '../../../../app/config/axiosInstance';
+import { useDispatch } from 'react-redux';
+import { registerUser, clearSessionStats } from '../../../community/state/communitySlice';
 
 const LoginPage = () => {
+  const dispatch = useDispatch();
   const { login } = useAuth();
   const { updateProfile } = useProfile();
   const navigate = useNavigate();
@@ -44,6 +47,18 @@ const LoginPage = () => {
           following: 0,
           profileViews: 0,
         });
+
+        dispatch(clearSessionStats());
+        dispatch(
+          registerUser({
+            name: res.data.user.fullname || res.data.user.username,
+            username: res.data.user.username,
+            email: res.data.user.email,
+            avatarUrl: res.data.user.profilePicture,
+            dateOfBirth: res.data.user.dob,
+            gender: res.data.user.gender,
+          })
+        );
 
         login(); // update frontend redux state
         navigate(redirectTo, { replace: true });

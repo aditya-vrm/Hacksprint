@@ -258,10 +258,53 @@ async function getUsers(req, res) {
     }
 }
 
+// GET USER DETAILS BY ID (WITH PROJECTS AND BLOGS)
+async function getUserById(req, res) {
+    try {
+        const { userId } = req.params;
+        const user = await userModel.findById(userId).select("-password");
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+        
+        // Find user's projects
+        const Project = require("../models/project.model");
+        const projects = await Project.find({ owner: userId }).sort({ createdAt: -1 });
+
+        // Find user's blogs
+        const Blog = require("../models/blog.model");
+        const blogs = await Blog.find({ author: userId }).sort({ createdAt: -1 });
+
+        return res.status(200).json({
+            user: {
+                id: user._id,
+                fullname: user.fullname,
+                username: user.username.startsWith("@") ? user.username : `@${user.username}`,
+                email: user.email,
+                dob: user.dob,
+                gender: user.gender,
+                profilePicture: user.profilePicture || "/logo.png",
+                followers: 0,
+                following: 0,
+            },
+            projects,
+            blogs
+        });
+    } catch (err) {
+        console.log("Error in get user by id:", err);
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+}
+
 module.exports = {
     registerUser,
     loginUser,
     getCurrentUser,
     logoutUser,
     getUsers,
+    getUserById,
 };

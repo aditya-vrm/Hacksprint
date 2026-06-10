@@ -29,7 +29,7 @@ const AppRoutes = () => (
         <Route path="community" element={<CommunityPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="blogs" element={<BlogsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
+        <Route path="profile/:userId?" element={<ProfilePage />} />
       </Route>
     </Route>
 

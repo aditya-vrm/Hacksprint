@@ -271,6 +271,11 @@ const communitySlice = createSlice({
       };
       persist(state);
     },
+    clearSessionStats: (state) => {
+      state.followerIds = [];
+      state.followedUserIds = [];
+      persist(state);
+    },
   },
 });
 
@@ -282,6 +287,7 @@ export const {
   toggleLike,
   toggleFollow,
   registerUser,
+  clearSessionStats,
 } =
   communitySlice.actions;
 

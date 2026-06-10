@@ -1,5 +1,6 @@
 import { Heart, GitBranch, ExternalLink, FileText, UserPlus, UserCheck, MessageCircle } from 'lucide-react';
 import { CURRENT_USER_ID } from '../../state/communitySlice';
+import { Link } from 'react-router-dom';
 
 const FeedCard = ({ post, author, liked, following, onLike, onFollow, onChat, onOpenDetail }) => {
   const isProject = post.type === 'project';
@@ -7,17 +8,20 @@ const FeedCard = ({ post, author, liked, following, onLike, onFollow, onChat, on
   return (
     <article className="bg-surface border border-border rounded-xl p-5 hover:border-primary/30 transition-all duration-200">
       <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3 min-w-0">
+        <Link
+          to={`/dashboard/profile/${author.id}`}
+          className="flex items-center gap-3 min-w-0 hover:opacity-85 transition-opacity group"
+        >
           <img
             src={author.avatarUrl}
             alt={author.name}
-            className="w-10 h-10 rounded-full border border-border object-cover shrink-0"
+            className="w-10 h-10 rounded-full border border-border object-cover shrink-0 group-hover:border-primary/50 transition-colors"
           />
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">{author.name}</p>
+            <p className="text-sm font-bold text-white truncate group-hover:text-primary transition-colors">{author.name}</p>
             <p className="text-xs text-text-muted font-mono truncate">{author.username}</p>
           </div>
-        </div>
+        </Link>
 
         {author.id !== CURRENT_USER_ID && (
           <div className="flex items-center gap-2 shrink-0">

@@ -3,6 +3,7 @@ import { Search, UserPlus, UserCheck } from 'lucide-react';
 import { useUserSearch } from '../../../community/hooks/useUserSearch';
 import { useCommunity } from '../../../community/hooks/useCommunity';
 import axiosInstance from '../../../../app/config/axiosInstance';
+import { Link } from 'react-router-dom';
 
 const UserSearchBar = () => {
   const [query, setQuery] = useState('');
@@ -88,20 +89,26 @@ const UserSearchBar = () => {
                 <li
                   key={user.id}
                   role="option"
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-surface-hover transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-surface-hover/50 transition-colors"
                 >
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    className="w-10 h-10 rounded-full border border-border object-cover shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-white truncate">{user.name}</p>
-                    <p className="text-xs text-text-muted font-mono truncate">{user.username}</p>
-                    <p className="text-[10px] text-text-muted mt-0.5">
-                      {user.followers?.toLocaleString() ?? 0} followers
-                    </p>
-                  </div>
+                  <Link
+                    to={`/dashboard/profile/${user.id}`}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-85 transition-opacity group"
+                  >
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full border border-border object-cover shrink-0 group-hover:border-primary/50 transition-colors"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white truncate group-hover:text-primary transition-colors">{user.name}</p>
+                      <p className="text-xs text-text-muted font-mono truncate">{user.username}</p>
+                      <p className="text-[10px] text-text-muted mt-0.5">
+                        {user.followers?.toLocaleString() ?? 0} followers
+                      </p>
+                    </div>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => toggleFollow(user.id)}

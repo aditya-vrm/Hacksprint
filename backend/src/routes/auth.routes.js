@@ -40,4 +40,11 @@ router.get(
     authController.getUsers
 );
 
+// GET USER PROFILE BY ID
+router.get(
+    "/users/:userId",
+    authMiddleware.authMiddleware,
+    authController.getUserById
+);
+
 module.exports = router;

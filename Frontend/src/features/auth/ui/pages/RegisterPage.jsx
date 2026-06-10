@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../../profile/hooks/useProfile';
-import { registerUser } from '../../../community/state/communitySlice';
+import { registerUser, clearSessionStats } from '../../../community/state/communitySlice';
 import { DASHBOARD_PATH } from '../../../landing/hooks/useLandingNavigation';
 import { formatUsername, isValidUsername } from '../../../../shared/utils/username';
 import { GENDER_OPTIONS } from '../../../../shared/constants/profileFields';
@@ -82,6 +82,7 @@ const RegisterPage = () => {
         profileViews: 0,
       });
 
+      dispatch(clearSessionStats());
       dispatch(
         registerUser({
           name: form.name,
