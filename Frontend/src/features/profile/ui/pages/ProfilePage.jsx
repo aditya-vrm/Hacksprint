@@ -3,10 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { LogOut, Camera, Users, UserPlus, UserCheck, Save, Folder, FileText, GitBranch, ExternalLink } from 'lucide-react';
 import { useProfile } from '../../hooks/useProfile';
 import { useAuth } from '../../../auth/hooks/useAuth';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { incrementViews } from '../../state/profileSlice';
 import { useCommunity } from '../../../community/hooks/useCommunity';
-import { registerUser } from '../../../community/state/communitySlice';
+import { registerUser, cacheUser, CURRENT_USER_ID } from '../../../community/state/communitySlice';
 import { formatUsername, isValidUsername } from '../../../../shared/utils/username';
 import {
   GENDER_OPTIONS,
@@ -16,8 +16,67 @@ import {
 } from '../../../../shared/constants/profileFields';
 import axiosInstance from '../../../../app/config/axiosInstance';
 
+const FollowersModal = ({ isOpen, onClose, title, usersList }) => {
+  const navigate = useNavigate();
+  if (!isOpen) return null;
+
+  const handleUserClick = (userId) => {
+    onClose();
+    if (userId === CURRENT_USER_ID) {
+      navigate('/dashboard/profile');
+    } else {
+      navigate(`/dashboard/profile/${userId}`);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-[#0B1120]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-[#172237] border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-text-muted hover:text-white transition-colors"
+          aria-label="Close modal"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <h3 className="text-xl font-bold text-white mb-4 tracking-tight">{title}</h3>
+
+        <div className="max-h-60 overflow-y-auto space-y-2.5 pr-1">
+          {usersList.length === 0 ? (
+            <p className="text-sm text-text-muted text-center py-6">
+              {title === 'Followers' ? 'No followers' : 'No following'}
+            </p>
+          ) : (
+            usersList.map((usr) => (
+              <button
+                key={usr.id}
+                onClick={() => handleUserClick(usr.id)}
+                className="w-full flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-white/5 border-b border-border/10 last:border-b-0 transition-all duration-150 text-left focus:outline-none"
+              >
+                <img
+                  src={usr.avatarUrl}
+                  alt={usr.name}
+                  className="w-10 h-10 rounded-full border border-border/40 object-cover shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-white truncate">{usr.name}</p>
+                  <p className="text-xs text-text-muted font-mono truncate">{usr.username}</p>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ProfilePage = () => {
   const dispatch = useDispatch();
+  const community = useSelector((state) => state.community);
   const { profile, updateProfile } = useProfile();
   const { logout } = useAuth();
   const {
@@ -40,6 +99,10 @@ const ProfilePage = () => {
   const [targetBlogs, setTargetBlogs] = useState([]);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [modalUsers, setModalUsers] = useState([]);
+
   const isSelf = !userId || (targetUser && targetUser.username === profile.username);
 
   useEffect(() => {
@@ -53,21 +116,43 @@ const ProfilePage = () => {
   }, [dispatch, isSelf]);
 
   useEffect(() => {
-    if (!userId) {
-      setTargetUser(null);
-      setTargetProjects([]);
-      setTargetBlogs([]);
-      return;
-    }
-
     const fetchUserData = async () => {
       setIsLoadingUser(true);
       try {
-        const { data } = await axiosInstance.get(`/v1/auth/users/${userId}`);
+        const url = userId ? `/v1/auth/users/${userId}` : '/v1/auth/me';
+        const { data } = await axiosInstance.get(url);
         if (data) {
-          setTargetUser(data.user);
-          setTargetProjects(data.projects || []);
-          setTargetBlogs(data.blogs || []);
+          const u = data.user;
+          if (isSelf) {
+            updateProfile({
+              name: u.fullname || u.username,
+              username: u.username,
+              email: u.email,
+              avatarUrl: u.profilePicture,
+              dateOfBirth: u.dob,
+              gender: u.gender,
+              followers: u.followers ? u.followers.length : 0,
+              following: u.following ? u.following.length : 0,
+            });
+            dispatch(registerUser({
+              name: u.fullname || u.username,
+              username: u.username,
+              email: u.email,
+              avatarUrl: u.profilePicture,
+              dateOfBirth: u.dob,
+              gender: u.gender,
+              followers: u.followers || [],
+              following: u.following || [],
+            }));
+            setTargetUser(u);
+            setTargetProjects([]);
+            setTargetBlogs([]);
+          } else {
+            setTargetUser(u);
+            setTargetProjects(data.projects || []);
+            setTargetBlogs(data.blogs || []);
+            dispatch(cacheUser(u));
+          }
         }
       } catch (err) {
         console.error('Failed to load user profile', err);
@@ -77,7 +162,7 @@ const ProfilePage = () => {
     };
 
     fetchUserData();
-  }, [userId, profile.username]);
+  }, [userId, isSelf, dispatch]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -131,6 +216,50 @@ const ProfilePage = () => {
     navigate('/');
   };
 
+  const handleOpenFollowers = () => {
+    const activeId = isSelf ? CURRENT_USER_ID : targetUser?.id;
+    let list = [];
+    if (activeId) {
+      const ids = community.users[activeId]?.followerIds || [];
+      list = ids.map(id => {
+        if (id === CURRENT_USER_ID) {
+          return {
+            id: CURRENT_USER_ID,
+            name: profile.name,
+            username: profile.username || '@you',
+            avatarUrl: profile.avatarUrl,
+          };
+        }
+        return community.users[id];
+      }).filter(Boolean);
+    }
+    setModalTitle('Followers');
+    setModalUsers(list);
+    setModalOpen(true);
+  };
+
+  const handleOpenFollowing = () => {
+    const activeId = isSelf ? CURRENT_USER_ID : targetUser?.id;
+    let list = [];
+    if (activeId) {
+      const ids = community.users[activeId]?.followingIds || [];
+      list = ids.map(id => {
+        if (id === CURRENT_USER_ID) {
+          return {
+            id: CURRENT_USER_ID,
+            name: profile.name,
+            username: profile.username || '@you',
+            avatarUrl: profile.avatarUrl,
+          };
+        }
+        return community.users[id];
+      }).filter(Boolean);
+    }
+    setModalTitle('Following');
+    setModalUsers(list);
+    setModalOpen(true);
+  };
+
   const displayUser = isSelf ? {
     name: form.name,
     username: displayUsername,
@@ -150,13 +279,13 @@ const ProfilePage = () => {
   const displayStats = isSelf ? {
     projects: totalProjects,
     blogs: totalBlogs,
-    followers: followersCount,
-    following: followingCount,
+    followers: community.users[CURRENT_USER_ID]?.followerIds?.length || 0,
+    following: community.users[CURRENT_USER_ID]?.followingIds?.length || 0,
   } : {
     projects: targetProjects.length,
     blogs: targetBlogs.length,
-    followers: (targetUser?.followers || 0) + (isFollowing(targetUser?.id) ? 1 : 0),
-    following: targetUser?.following || 0,
+    followers: community.users[targetUser?.id]?.followerIds?.length || 0,
+    following: community.users[targetUser?.id]?.followingIds?.length || 0,
   };
 
   if (isLoadingUser) {
@@ -236,7 +365,12 @@ const ProfilePage = () => {
             {!isSelf && targetUser && (
               <button
                 type="button"
-                onClick={() => toggleFollow(targetUser.id)}
+                onClick={() => toggleFollow({
+                  id: targetUser.id,
+                  name: targetUser.fullname,
+                  username: targetUser.username,
+                  avatarUrl: targetUser.profilePicture
+                })}
                 className={`mt-4 w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isFollowing(targetUser.id)
                     ? 'bg-primary/15 text-primary border border-primary/30'
@@ -305,14 +439,24 @@ const ProfilePage = () => {
                 Blogs
               </p>
             </div>
-            <div className="bg-surface border border-border rounded-xl p-4 text-center hover:border-primary/40 transition-colors">
+            <div
+              onClick={handleOpenFollowers}
+              role="button"
+              tabIndex={0}
+              className="bg-surface border border-border rounded-xl p-4 text-center hover:border-primary/40 transition-colors cursor-pointer focus:outline-none"
+            >
               <Users className="w-5 h-5 text-primary mx-auto mb-2" />
               <p className="text-2xl font-bold text-white">{displayStats.followers}</p>
               <p className="text-[10px] font-mono text-text-muted uppercase tracking-wider mt-1">
                 Followers
               </p>
             </div>
-            <div className="bg-surface border border-border rounded-xl p-4 text-center hover:border-primary/40 transition-colors">
+            <div
+              onClick={handleOpenFollowing}
+              role="button"
+              tabIndex={0}
+              className="bg-surface border border-border rounded-xl p-4 text-center hover:border-primary/40 transition-colors cursor-pointer focus:outline-none"
+            >
               <UserPlus className="w-5 h-5 text-primary mx-auto mb-2" />
               <p className="text-2xl font-bold text-white">{displayStats.following}</p>
               <p className="text-[10px] font-mono text-text-muted uppercase tracking-wider mt-1">
@@ -516,6 +660,13 @@ const ProfilePage = () => {
           )}
         </div>
       </div>
+
+      <FollowersModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalTitle}
+        usersList={modalUsers}
+      />
     </div>
   );
 };

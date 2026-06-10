@@ -61,8 +61,8 @@ const registerUserValidations = [
 const loginValidations = [
 
     body("email")
-        .isEmail()
-        .withMessage("Invalid email address"),
+        .notEmpty()
+        .withMessage("Email or username is required"),
 
     body("password")
         .isLength({ min: 6 })

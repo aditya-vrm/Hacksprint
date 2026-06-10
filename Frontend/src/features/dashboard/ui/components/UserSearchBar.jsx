@@ -111,7 +111,7 @@ const UserSearchBar = () => {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => toggleFollow(user.id)}
+                    onClick={() => toggleFollow(user)}
                     className={`flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                       following
                         ? 'bg-primary/15 text-primary border border-primary/30'

@@ -47,4 +47,11 @@ router.get(
     authController.getUserById
 );
 
+// TOGGLE FOLLOW USER
+router.post(
+    "/users/:targetUserId/follow",
+    authMiddleware.authMiddleware,
+    authController.toggleFollowUser
+);
+
 module.exports = router;

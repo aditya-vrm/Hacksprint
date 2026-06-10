@@ -174,7 +174,10 @@ async function loginUser(req, res) {
 // GET CURRENT USER PROFILE
 async function getCurrentUser(req, res) {
     try {
-        const user = await userModel.findById(req.user.id);
+        const user = await userModel.findById(req.user.id)
+            .populate("followers", "fullname username profilePicture")
+            .populate("following", "fullname username profilePicture")
+            .select("-password");
 
         if (!user) {
             return res.status(404).json({
@@ -247,7 +250,7 @@ async function getUsers(req, res) {
                 name: u.fullname,
                 username: u.username.startsWith("@") ? u.username : `@${u.username}`,
                 avatarUrl: u.profilePicture || "/logo.png",
-                followers: 0
+                followers: u.followers ? u.followers.length : 0
             }))
         });
     } catch (err) {
@@ -262,7 +265,11 @@ async function getUsers(req, res) {
 async function getUserById(req, res) {
     try {
         const { userId } = req.params;
-        const user = await userModel.findById(userId).select("-password");
+        const user = await userModel.findById(userId)
+            .populate("followers", "fullname username profilePicture")
+            .populate("following", "fullname username profilePicture")
+            .select("-password");
+
         if (!user) {
             return res.status(404).json({
                 message: "User not found"
@@ -286,14 +293,67 @@ async function getUserById(req, res) {
                 dob: user.dob,
                 gender: user.gender,
                 profilePicture: user.profilePicture || "/logo.png",
-                followers: 0,
-                following: 0,
+                followers: user.followers || [],
+                following: user.following || [],
             },
             projects,
             blogs
         });
     } catch (err) {
         console.log("Error in get user by id:", err);
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+}
+
+// TOGGLE FOLLOW USER RELATIONSHIP
+async function toggleFollowUser(req, res) {
+    try {
+        const { targetUserId } = req.params;
+        const currentUserId = req.user.id;
+
+        if (targetUserId === currentUserId.toString()) {
+            return res.status(400).json({
+                message: "You cannot follow yourself"
+            });
+        }
+
+        const targetUser = await userModel.findById(targetUserId);
+        const currentUser = await userModel.findById(currentUserId);
+
+        if (!targetUser || !currentUser) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+
+        // Initialize arrays if they don't exist
+        if (!targetUser.followers) targetUser.followers = [];
+        if (!currentUser.following) currentUser.following = [];
+
+        const isFollowing = currentUser.following.some(id => id.toString() === targetUserId);
+
+        if (isFollowing) {
+            // Unfollow
+            currentUser.following.pull(targetUserId);
+            targetUser.followers.pull(currentUserId);
+        } else {
+            // Follow
+            currentUser.following.addToSet(targetUserId);
+            targetUser.followers.addToSet(currentUserId);
+        }
+
+        await currentUser.save();
+        await targetUser.save();
+
+        return res.status(200).json({
+            isFollowing: !isFollowing,
+            followerCount: targetUser.followers.length,
+            followingCount: currentUser.following.length
+        });
+    } catch (err) {
+        console.log("Error in toggle follow user:", err);
         return res.status(500).json({
             message: "Internal server error"
         });
@@ -307,4 +367,5 @@ module.exports = {
     logoutUser,
     getUsers,
     getUserById,
+    toggleFollowUser,
 };

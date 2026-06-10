@@ -6,9 +6,10 @@ import {
   addBlog,
   loadMoreFeed,
   toggleLike,
-  toggleFollow,
+  toggleFollow as toggleFollowAction,
   CURRENT_USER_ID,
 } from '../state/communitySlice';
+import axiosInstance from '../../../app/config/axiosInstance';
 
 export const useCommunity = () => {
   const dispatch = useDispatch();
@@ -74,6 +75,19 @@ export const useCommunity = () => {
     addBlog: useCallback((data) => dispatch(addBlog(data)), [dispatch]),
     loadMoreFeed: useCallback(() => dispatch(loadMoreFeed()), [dispatch]),
     toggleLike: useCallback((postId) => dispatch(toggleLike(postId)), [dispatch]),
-    toggleFollow: useCallback((userId) => dispatch(toggleFollow(userId)), [dispatch]),
+    toggleFollow: useCallback(async (userPayload) => {
+      const userId = typeof userPayload === 'object' ? userPayload.id : userPayload;
+      if (!userId) return;
+      if (userId.startsWith('u-')) {
+        dispatch(toggleFollowAction(userPayload));
+        return;
+      }
+      try {
+        await axiosInstance.post(`/v1/auth/users/${userId}/follow`);
+        dispatch(toggleFollowAction(userPayload));
+      } catch (err) {
+        console.error('Failed to toggle follow on backend', err);
+      }
+    }, [dispatch]),
   };
 };

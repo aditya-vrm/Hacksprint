@@ -36,7 +36,7 @@ const FeedCard = ({ post, author, liked, following, onLike, onFollow, onChat, on
             </button>
             <button
               type="button"
-              onClick={() => onFollow(author.id)}
+              onClick={() => onFollow(author)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
                 following
                   ? 'bg-primary/15 text-primary border border-primary/30'
