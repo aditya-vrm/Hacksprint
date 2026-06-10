@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useAuth } from '../../hooks/useAuth';
@@ -29,6 +29,7 @@ const RegisterPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -47,7 +48,8 @@ const RegisterPage = () => {
       usernameError ||
       password === '' ||
       !form.gender ||
-      !form.username
+      !form.username ||
+      isLoading
     ) {
       return;
     }
@@ -57,6 +59,7 @@ const RegisterPage = () => {
       ? '/male-avatar.avif' 
       : (form.gender === 'female' ? '/female-avatar.png' : profile.avatarUrl);
 
+    setIsLoading(true);
     try {
       const response = await axiosInstance.post('/v1/auth/register', {
         fullname: form.name,
@@ -74,6 +77,9 @@ const RegisterPage = () => {
         email: form.email,
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
+        followers: 0,
+        following: 0,
+        profileViews: 0,
       });
 
       dispatch(
@@ -91,6 +97,8 @@ const RegisterPage = () => {
     } catch (error) {
       console.error('Registration failed:', error);
       alert(error.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -111,7 +119,8 @@ const RegisterPage = () => {
             onChange={handleChange}
             required
             placeholder="John Doe"
-            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           />
         </div>
 
@@ -135,11 +144,12 @@ const RegisterPage = () => {
               required
               placeholder="johndoe"
               autoComplete="username"
-              className={`w-full bg-background border rounded-lg pl-8 pr-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:ring-1 transition-all ${
+              className={`w-full bg-background border rounded-lg pl-8 pr-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:ring-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                 usernameError
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
                   : 'border-border focus:border-primary focus:ring-primary'
               }`}
+              disabled={isLoading}
             />
           </div>
           {usernameError ? (
@@ -161,7 +171,8 @@ const RegisterPage = () => {
             value={form.dateOfBirth}
             onChange={handleChange}
             required
-            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all [color-scheme:dark]"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all [color-scheme:dark] disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           />
         </div>
 
@@ -172,7 +183,8 @@ const RegisterPage = () => {
             value={form.gender}
             onChange={handleChange}
             required
-            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all [color-scheme:dark]"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all [color-scheme:dark] disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
             {GENDER_OPTIONS.map((option) => (
               <option key={option.value} value={option.value} disabled={option.value === ''}>
@@ -191,7 +203,8 @@ const RegisterPage = () => {
             onChange={handleChange}
             required
             placeholder="john@example.com"
-            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           />
         </div>
 
@@ -204,16 +217,18 @@ const RegisterPage = () => {
               placeholder="••••••••" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={`w-full bg-background border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:ring-1 transition-all pr-10 ${
+              className={`w-full bg-background border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:ring-1 transition-all pr-10 disabled:opacity-50 disabled:cursor-not-allowed ${
                 passwordError 
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
                   : 'border-border focus:border-primary focus:ring-primary'
               }`} 
+              disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors focus:outline-none disabled:opacity-50"
+              disabled={isLoading}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -234,16 +249,18 @@ const RegisterPage = () => {
               placeholder="••••••••" 
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`w-full bg-background border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:ring-1 transition-all pr-10 ${
+              className={`w-full bg-background border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:ring-1 transition-all pr-10 disabled:opacity-50 disabled:cursor-not-allowed ${
                 confirmPasswordError 
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
                   : 'border-border focus:border-primary focus:ring-primary'
               }`} 
+              disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors focus:outline-none disabled:opacity-50"
+              disabled={isLoading}
             >
               {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -257,9 +274,17 @@ const RegisterPage = () => {
 
         <button 
           type="submit" 
-          className="w-full bg-primary hover:bg-primary-hover text-[#0B1120] font-bold py-3 rounded-lg text-sm tracking-wide transition-all duration-300 shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:shadow-[0_0_25px_rgba(34,211,238,0.5)] mt-4"
+          disabled={isLoading}
+          className="w-full bg-primary hover:bg-primary-hover disabled:bg-primary/50 disabled:cursor-not-allowed text-[#0B1120] font-bold py-3 rounded-lg text-sm tracking-wide transition-all duration-300 shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:shadow-[0_0_25px_rgba(34,211,238,0.5)] disabled:shadow-none mt-4 flex items-center justify-center gap-2"
         >
-          SIGN UP
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-[#0B1120]" />
+              SIGNING UP...
+            </>
+          ) : (
+            'SIGN UP'
+          )}
         </button>
       </form>
 

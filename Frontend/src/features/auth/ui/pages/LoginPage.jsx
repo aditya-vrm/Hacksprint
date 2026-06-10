@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../../profile/hooks/useProfile';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
@@ -17,10 +17,12 @@ const LoginPage = () => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
       // The backend uses $or: [{ email }, { username }], so we can safely send the same for both
@@ -38,6 +40,9 @@ const LoginPage = () => {
           avatarUrl: res.data.user.profilePicture,
           dateOfBirth: res.data.user.dob,
           gender: res.data.user.gender,
+          followers: 0,
+          following: 0,
+          profileViews: 0,
         });
 
         login(); // update frontend redux state
@@ -46,6 +51,8 @@ const LoginPage = () => {
     } catch (err) {
       console.error('Login failed', err);
       setError(err.response?.data?.message || 'Failed to login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,8 +77,9 @@ const LoginPage = () => {
             placeholder="you@example.com or username"
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+            className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -83,13 +91,15 @@ const LoginPage = () => {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all pr-10"
+              className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-white placeholder-text-muted/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all pr-10 disabled:opacity-50 disabled:cursor-not-allowed"
               required
+              disabled={isLoading}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors focus:outline-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors focus:outline-none disabled:opacity-50"
+              disabled={isLoading}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -98,9 +108,17 @@ const LoginPage = () => {
 
         <button 
           type="submit" 
-          className="w-full bg-primary hover:bg-primary-hover text-[#0B1120] font-bold py-3 rounded-lg text-sm tracking-wide transition-all duration-300 shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:shadow-[0_0_25px_rgba(34,211,238,0.5)] mt-4"
+          disabled={isLoading}
+          className="w-full bg-primary hover:bg-primary-hover disabled:bg-primary/50 disabled:cursor-not-allowed text-[#0B1120] font-bold py-3 rounded-lg text-sm tracking-wide transition-all duration-300 shadow-[0_0_15px_rgba(34,211,238,0.3)] hover:shadow-[0_0_25px_rgba(34,211,238,0.5)] disabled:shadow-none mt-4 flex items-center justify-center gap-2"
         >
-          LOG IN
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-[#0B1120]" />
+              LOGGING IN...
+            </>
+          ) : (
+            'LOG IN'
+          )}
         </button>
       </form>
 

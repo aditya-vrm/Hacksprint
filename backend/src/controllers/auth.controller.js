@@ -216,9 +216,52 @@ async function logoutUser(req, res) {
     }
 }
 
+// GET ALL USERS OR SEARCH USERS
+async function getUsers(req, res) {
+    try {
+        const { search } = req.query;
+        let query = {};
+        
+        if (search) {
+            query = {
+                $or: [
+                    { username: { $regex: search, $options: "i" } },
+                    { fullname: { $regex: search, $options: "i" } },
+                ]
+            };
+        }
+        
+        // Exclude current logged-in user
+        if (req.user && req.user._id) {
+            query._id = { $ne: req.user._id };
+        }
+
+        const users = await userModel
+            .find(query)
+            .select("-password")
+            .limit(20);
+
+        return res.status(200).json({
+            users: users.map(u => ({
+                id: u._id,
+                name: u.fullname,
+                username: u.username.startsWith("@") ? u.username : `@${u.username}`,
+                avatarUrl: u.profilePicture || "/logo.png",
+                followers: 0
+            }))
+        });
+    } catch (err) {
+        console.log("Error in get users:", err);
+        return res.status(500).json({
+            message: "Internal server error",
+        });
+    }
+}
+
 module.exports = {
     registerUser,
     loginUser,
     getCurrentUser,
     logoutUser,
+    getUsers,
 };

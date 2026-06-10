@@ -33,4 +33,11 @@ router.post(
     authController.logoutUser
 );
 
+// SEARCH USERS
+router.get(
+    "/users",
+    authMiddleware.authMiddleware,
+    authController.getUsers
+);
+
 module.exports = router;

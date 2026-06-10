@@ -12,8 +12,9 @@ const DEFAULT_PROFILE = {
   gender: '',
   avatarUrl:
     'https://i.pinimg.com/originals/ae/31/c8/ae31c8133ba753a0fd618a50bf78f56d.jpg',
-  followers: 842,
-  following: 156,
+  followers: 0,
+  following: 0,
+  profileViews: 0,
 };
 
 const loadProfile = () => {
@@ -43,8 +44,12 @@ const profileSlice = createSlice({
       state[field] = value;
       persistProfile(state);
     },
+    incrementViews: (state) => {
+      state.profileViews = (state.profileViews || 0) + 1;
+      persistProfile(state);
+    },
   },
 });
 
-export const { updateProfile, updateProfileField } = profileSlice.actions;
+export const { updateProfile, updateProfileField, incrementViews } = profileSlice.actions;
 export default profileSlice.reducer;

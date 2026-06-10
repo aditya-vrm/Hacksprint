@@ -4,6 +4,7 @@ import { LogOut, Camera, Users, UserPlus, Save, Folder, FileText } from 'lucide-
 import { useProfile } from '../../hooks/useProfile';
 import { useAuth } from '../../../auth/hooks/useAuth';
 import { useDispatch } from 'react-redux';
+import { incrementViews } from '../../state/profileSlice';
 import { useCommunity } from '../../../community/hooks/useCommunity';
 import { registerUser } from '../../../community/state/communitySlice';
 import { formatUsername, isValidUsername } from '../../../../shared/utils/username';
@@ -33,6 +34,10 @@ const ProfilePage = () => {
   useEffect(() => {
     setForm(profileToForm(profile));
   }, [profile]);
+
+  useEffect(() => {
+    dispatch(incrementViews());
+  }, [dispatch]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));

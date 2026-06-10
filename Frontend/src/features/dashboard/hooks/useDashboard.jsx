@@ -15,6 +15,7 @@ const getGreetingMessage = () => {
 export const useDashboard = () => {
   const profile = useSelector((state) => state.profile);
   const feed = useSelector((state) => state.community.feed);
+  const followerIds = useSelector((state) => state.community.followerIds);
 
   const totalLikes = useMemo(
     () =>
@@ -26,11 +27,11 @@ export const useDashboard = () => {
 
   const stats = useMemo(
     () => ({
-      profileViews: (totalLikes * 42 + feed.length * 15).toLocaleString(),
+      profileViews: (profile.profileViews || 0).toLocaleString(),
       totalLikes,
-      followers: profile.followers,
+      followers: (profile.followers || 0) + (followerIds?.length || 0),
     }),
-    [profile.followers, totalLikes, feed.length],
+    [profile.followers, followerIds, totalLikes, profile.profileViews],
   );
   const greetingMessage = useMemo(() => getGreetingMessage(), []);
 

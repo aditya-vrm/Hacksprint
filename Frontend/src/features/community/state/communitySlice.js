@@ -121,7 +121,7 @@ const DEFAULT_STATE = {
   visibleCount: 8,
   likedIds: [],
   followedUserIds: [],
-  followerIds: ['u-sarah', 'u-priya'],
+  followerIds: [],
   users: Object.fromEntries(MOCK_USERS.map((u) => [u.id, { ...u }])),
 };
 
